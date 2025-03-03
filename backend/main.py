@@ -19,6 +19,7 @@ from pydantic_ai.messages import ModelMessage
 from pydantic_ai.usage import Usage, UsageLimits
 from dotenv import load_dotenv
 from pydantic_ai.models.gemini import GeminiModel
+from dataclasses import dataclass, field
 
 # Load environment variables
 load_dotenv()
@@ -66,12 +67,13 @@ class Deps:
     """Dependencies for the blood sugar agent."""
 
     today: datetime.date = datetime.date.today()
-    previous_readings: List[BloodSugarReading] = None
+    previous_readings: List[BloodSugarReading] = field(default_factory=list)
 
 
 # Main conversational agent to guide the user through recording blood sugar
 conversation_agent = Agent[Deps, str](
     model,
+    deps_type=Deps,
     result_type=str,
     retries=2,
     system_prompt=(
@@ -81,7 +83,13 @@ conversation_agent = Agent[Deps, str](
         "Ask follow-up questions about their day, diet, exercise, medication, or anything that might "
         "affect their readings. Personalize the conversation based on their history and trends. "
         "When appropriate, offer simple educational tips about diabetes management. "
-        "Never be judgmental about high or low readings."
+        "Never be judgmental about high or low readings. 
+        "use today date if the person "
+        "adding examples here. think through this and add more examples"
+        "question: 'What was your blood sugar reading today?"
+        "1. parsse the dat
+        2. validate the blood sugar reading. 
+        3. validte the date and make sure that it's right"
     ),
 )
 
@@ -151,6 +159,7 @@ async def analyze_trend(ctx: RunContext[Deps], new_reading: BloodSugarReading) -
         return f"This is your first {new_reading.meal_status.value} reading."
 
     # Calculate average
+    # what other analytics. 
     avg = sum(r.glucose_level for r in similar_readings) / len(similar_readings)
 
     # Compare with the new reading
@@ -270,7 +279,7 @@ class ConnectionManager:
         self, websocket: WebSocket, reading: BloodSugarReading
     ):
         # Convert date to string for JSON serialization
-        reading_dict = reading.dict()
+        reading_dict = reading.model_dump()
         reading_dict["date"] = str(reading_dict["date"])
 
         await websocket.send_text(
@@ -282,7 +291,7 @@ class ConnectionManager:
         readings_list = []
 
         for reading in readings:
-            reading_dict = reading.dict()
+            reading_dict = reading.model_dump()
             reading_dict["date"] = str(reading_dict["date"])
             readings_list.append(reading_dict)
 
@@ -334,26 +343,36 @@ async def websocket_endpoint(websocket: WebSocket):
                     # Reading extracted successfully
                     # Perform validation directly without using RunContext
                     reading = extraction_result.data
-                    errors = []
+                    # errors = []
 
-                    if reading.glucose_level < 30 or reading.glucose_level > 600:
-                        errors.append(
-                            f"Blood sugar level {reading.glucose_level} mg/dL is outside typical meter range (30-600 mg/dL)"
-                        )
+                    is_valid, error_message = validate_reading(reading, deps.today)
 
-                    if reading.date > deps.today:
-                        errors.append(
-                            f"Date cannot be in the future: {reading.date} > {deps.today}"
-                        )
-
-                    if errors:
+                    if is_valid:
+                        await manager.send_reading_extracted(websocket, reading)
+                    else:
                         await manager.send_message(
                             websocket,
-                            f"I couldn't validate your reading: {'; '.join(errors)}",
+                            f"I couldn't validate your reading: {error_message}",
                         )
-                    else:
-                        # Reading is valid, send for confirmation
-                        await manager.send_reading_extracted(websocket, reading)
+
+                    # if reading.glucose_level < 30 or reading.glucose_level > 600:
+                    #     errors.append(
+                    #         f"Blood sugar level {reading.glucose_level} mg/dL is outside typical meter range (30-600 mg/dL)"
+                    #     )
+
+                    # if reading.date > deps.today:
+                    #     errors.append(
+                    #         f"Date cannot be in the future: {reading.date} > {deps.today}"
+                    #     )
+
+                    # if errors:
+                    #     await manager.send_message(
+                    #         websocket,
+                    #         f"I couldn't validate your reading: {'; '.join(errors)}",
+                    #     )
+                    # else:
+                    #     # Reading is valid, send for confirmation
+                    #     await manager.send_reading_extracted(websocket, reading)
                 else:
                     # No reading extracted, continue with conversation
                     result = await conversation_agent.run(
@@ -414,6 +433,9 @@ async def websocket_endpoint(websocket: WebSocket):
                         )
 
                         # Compare with the new reading
+                        # use the users distribution for more tailored response 
+                        # how to handle distribution shift. 
+                        #  
                         if abs(reading.glucose_level - avg) < 10:
                             trend_analysis = f"This reading is consistent with your average {reading.meal_status.value} level of {avg:.1f} mg/dL."
                         elif reading.glucose_level > avg:
