@@ -1,0 +1,35 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    env_file:
+      - .env
+    environment:
+      GLUCOSE_CORS_ORIGINS: http://localhost:5173
+      GLUCOSE_DATA_FILE: /data/glucose_state.json
+    ports:
+      - "8000:8000"
+    volumes:
+      - glucose_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ./client/glucose_doc_client
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3000
+      PUBLIC_WS_URL: ws://localhost:8000/ws
+    ports:
+      - "5173:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  glucose_data:

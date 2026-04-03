@@ -1,15 +1,14 @@
-<!-- src/routes/history/+page.svelte -->
-<script lang="ts">
+<script>
+	// @ts-nocheck
 	import { onMount } from 'svelte';
 	import { websocketStore, readings, connected } from '$lib/stores/websocket';
 	import { format } from 'date-fns';
 
-	// Format date for display
-	function formatDate(dateStr: string): string {
+	function formatDate(dateStr) {
 		try {
 			const date = new Date(dateStr);
 			return format(date, 'MMM d, yyyy');
-		} catch (e) {
+		} catch {
 			return dateStr;
 		}
 	}
@@ -18,116 +17,91 @@
 		if (!$connected) {
 			websocketStore.connect();
 		}
-		// Request history data when component mounts
 		websocketStore.getHistory();
 	});
 </script>
 
-<div class="mx-auto max-w-4xl">
-	<div class="overflow-hidden rounded-lg bg-white shadow">
-		<div class="border-b p-4 sm:p-6">
-			<h1 class="text-xl font-bold text-gray-900">Blood Sugar History</h1>
-			<p class="text-sm text-gray-500">All your recorded readings</p>
+<div class="space-y-6">
+	<section class="glass-panel-strong rounded-[2rem] p-6 sm:p-8">
+		<p class="section-eyebrow mb-2">Reading archive</p>
+		<div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+			<div>
+				<h2 class="font-[var(--font-display)] text-4xl tracking-[-0.04em] text-[var(--ink-strong)]">
+					Your glucose history, without spreadsheet fatigue.
+				</h2>
+				<p class="mt-3 max-w-2xl text-sm leading-7 text-[var(--ink-soft)]">
+					A clean ledger of readings, meal context, and notes so it is easy to spot patterns
+					or remember what was different on a given day.
+				</p>
+			</div>
+			<div class="metric-card min-w-[12rem]">
+				<p class="metric-label">Total entries</p>
+				<p class="metric-value mt-3">{$readings.length}</p>
+			</div>
 		</div>
+	</section>
 
-		<div class="p-4 sm:p-6">
-			{#if !$connected}
-				<div class="rounded-md bg-yellow-50 p-3 text-yellow-800">
+	<section class="glass-panel-strong overflow-hidden rounded-[2rem]">
+		{#if !$connected}
+			<div class="p-6">
+				<div class="rounded-2xl border border-[rgba(176,114,45,0.18)] bg-[rgba(255,248,235,0.86)] p-4 text-sm text-[var(--warning)]">
 					Connecting to server... Please wait.
 				</div>
-			{:else if $readings.length === 0}
-				<div class="p-6 text-center">
-					<div
-						class="bg-primary-100 mx-auto flex h-12 w-12 items-center justify-center rounded-full"
-					>
-						<svg
-							class="text-primary-600 h-6 w-6"
-							xmlns="http://www.w3.org/2000/svg"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-							/>
-						</svg>
-					</div>
-					<h3 class="mt-2 text-sm font-medium text-gray-900">No readings yet</h3>
-					<p class="mt-1 text-sm text-gray-500">
-						Get started by adding your first blood sugar reading.
-					</p>
-					<div class="mt-6">
-						<a href="/" class="btn btn-primary"> Record a Reading </a>
-					</div>
+			</div>
+		{:else if $readings.length === 0}
+			<div class="p-8 text-center sm:p-12">
+				<div class="mx-auto flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-[rgba(184,82,67,0.1)] text-2xl">
+					<span aria-hidden="true">◌</span>
 				</div>
-			{:else}
-				<div class="overflow-x-auto">
-					<table class="min-w-full divide-y divide-gray-200">
-						<thead class="bg-gray-50">
-							<tr>
-								<th
-									scope="col"
-									class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-								>
-									#
-								</th>
-								<th
-									scope="col"
-									class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-								>
-									Date
-								</th>
-								<th
-									scope="col"
-									class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-								>
-									Glucose Level
-								</th>
-								<th
-									scope="col"
-									class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-								>
-									Status
-								</th>
-								<th
-									scope="col"
-									class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-								>
-									Notes
-								</th>
-							</tr>
-						</thead>
-						<tbody class="divide-y divide-gray-200 bg-white">
-							{#each $readings as reading, i}
-								<tr>
-									<td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-										{i + 1}
-									</td>
-									<td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-										{formatDate(reading.date)}
-									</td>
-									<td class="whitespace-nowrap px-6 py-4">
-										<span
-											class="inline-flex rounded-full bg-green-100 px-2 text-xs font-semibold leading-5 text-green-800"
-										>
-											{reading.glucose_level} mg/dL
-										</span>
-									</td>
-									<td class="whitespace-nowrap px-6 py-4 text-sm capitalize text-gray-500">
+				<h3 class="mt-5 font-[var(--font-display)] text-3xl tracking-[-0.03em] text-[var(--ink-strong)]">
+					No readings yet
+				</h3>
+				<p class="mx-auto mt-3 max-w-md text-sm leading-7 text-[var(--ink-soft)]">
+					Start with a single reading and this archive will turn into a much more useful story of
+					your routine.
+				</p>
+				<div class="mt-6">
+					<a href="/" class="btn btn-primary">Record a Reading</a>
+				</div>
+			</div>
+		{:else}
+			<div class="overflow-x-auto">
+				<table class="min-w-full">
+					<thead>
+						<tr class="border-b border-[rgba(125,84,76,0.12)] text-left">
+							<th class="px-5 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Date</th>
+							<th class="px-5 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Reading</th>
+							<th class="px-5 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Context</th>
+							<th class="px-5 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-soft)]">Notes</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each [...$readings].reverse() as reading}
+							<tr class="border-b border-[rgba(125,84,76,0.08)] align-top">
+								<td class="px-5 py-5">
+									<p class="font-semibold text-[var(--ink-strong)]">{formatDate(reading.date)}</p>
+									<p class="mt-1 text-xs uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+										{reading.date}
+									</p>
+								</td>
+								<td class="px-5 py-5">
+									<div class="inline-flex rounded-full bg-[rgba(59,127,107,0.12)] px-4 py-2 text-sm font-semibold text-[var(--success)]">
+										{reading.glucose_level} mg/dL
+									</div>
+								</td>
+								<td class="px-5 py-5">
+									<span class="status-chip {reading.meal_status === 'fasting' ? 'status-chip-success' : 'status-chip-warning'} capitalize">
 										{reading.meal_status}
-									</td>
-									<td class="max-w-xs break-words px-6 py-4 text-sm text-gray-500">
-										{reading.notes || '-'}
-									</td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
-				</div>
-			{/if}
-		</div>
-	</div>
+									</span>
+								</td>
+								<td class="max-w-md px-5 py-5 text-sm leading-7 text-[var(--ink-soft)]">
+									{reading.notes || 'No notes attached to this reading.'}
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
+		{/if}
+	</section>
 </div>

@@ -1,0 +1,27 @@
+[project]
+name = "glucose-buddy-backend"
+version = "0.1.0"
+description = "Agentic backend for Glucose Buddy"
+requires-python = ">=3.10"
+dependencies = [
+    "dateparser==1.4.0",
+    "fastapi==0.135.3",
+    "logfire==4.31.0",
+    "pydantic==2.12.5",
+    "pydantic-ai==1.77.0",
+    "python-dotenv==1.2.2",
+    "uvicorn[standard]==0.43.0",
+]
+
+[dependency-groups]
+dev = [
+    "taskipy==1.14.1",
+]
+
+[tool.uv]
+package = false
+
+[tool.taskipy.tasks]
+dev = "uvicorn main:app --reload"
+test = "python -m unittest discover -s tests"
+sync = "uv sync"

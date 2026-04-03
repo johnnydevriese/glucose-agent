@@ -1,0 +1,14 @@
+.git
+.history
+.DS_Store
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.svelte-kit
+**/dist
+**/node_modules
+**/.venv
+backend/data
+client/glucose_doc_client/playwright-report
+client/glucose_doc_client/test-results
+
