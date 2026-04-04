@@ -23,12 +23,47 @@
 	$: latestPrandial =
 		prandialReadings.length > 0 ? prandialReadings[prandialReadings.length - 1] : null;
 
+	$: fastingChart = buildSeries(fastingReadings, '#3b7f6b');
+	$: prandialChart = buildSeries(prandialReadings, '#b85243');
+
 	function formatDate(dateStr) {
 		try {
 			return format(new Date(dateStr), 'MMM d, yyyy');
 		} catch {
 			return dateStr;
 		}
+	}
+
+	function buildSeries(series, color) {
+		if (!series.length) {
+			return { path: '', points: [], min: 0, max: 0, color };
+		}
+
+		const values = series.map((reading) => reading.glucose_level);
+		const min = Math.min(...values);
+		const max = Math.max(...values);
+		const range = Math.max(max - min, 1);
+		const width = 100;
+		const height = 100;
+
+		const points = series.map((reading, index) => {
+			const x = series.length === 1 ? width / 2 : (index / (series.length - 1)) * width;
+			const y = height - ((reading.glucose_level - min) / range) * height;
+			return {
+				x,
+				y,
+				label: formatDate(reading.date),
+				value: reading.glucose_level
+			};
+		});
+
+		return {
+			path: points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' '),
+			points,
+			min,
+			max,
+			color
+		};
 	}
 </script>
 
@@ -82,7 +117,7 @@
 				</div>
 			</div>
 		{:else}
-			<div class="grid gap-5 lg:grid-cols-2">
+			<div class="mb-5 grid gap-5 lg:grid-cols-2">
 				<div class="soft-panel rounded-[1.5rem] p-5">
 					<p class="metric-label">Average fasting</p>
 					<p class="mt-3 font-[var(--font-display)] text-4xl tracking-[-0.04em]">
@@ -121,6 +156,86 @@
 						<p class="mt-3 text-sm text-[var(--ink-soft)]">{formatDate(latestPrandial.date)}</p>
 					{:else}
 						<p class="mt-3 text-sm leading-7 text-[var(--ink-soft)]">No after-meal reading recorded yet.</p>
+					{/if}
+				</div>
+			</div>
+
+			<div class="grid gap-5 lg:grid-cols-2">
+				<div class="soft-panel rounded-[1.5rem] p-5">
+					<div class="mb-4 flex items-end justify-between gap-4">
+						<div>
+							<p class="metric-label">Fasting trend</p>
+							<p class="mt-2 text-sm leading-7 text-[var(--ink-soft)]">
+								A quick look at how fasting readings have moved across your recent entries.
+							</p>
+						</div>
+						{#if fastingReadings.length}
+							<div class="text-right text-xs uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+								<div>Range</div>
+								<div class="mt-1 font-semibold text-[var(--ink-strong)]">
+									{fastingChart.min} to {fastingChart.max}
+								</div>
+							</div>
+						{/if}
+					</div>
+					{#if fastingReadings.length}
+						<svg viewBox="0 0 100 100" class="h-44 w-full overflow-visible">
+							<line x1="0" y1="100" x2="100" y2="100" stroke="rgba(125,84,76,0.18)" stroke-width="1" />
+							<path
+								d={fastingChart.path}
+								fill="none"
+								stroke={fastingChart.color}
+								stroke-width="3"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							/>
+							{#each fastingChart.points as point}
+								<circle cx={point.x} cy={point.y} r="3.2" fill={fastingChart.color}>
+									<title>{point.label}: {point.value} mg/dL</title>
+								</circle>
+							{/each}
+						</svg>
+					{:else}
+						<p class="text-sm leading-7 text-[var(--ink-soft)]">No fasting readings yet.</p>
+					{/if}
+				</div>
+
+				<div class="soft-panel rounded-[1.5rem] p-5">
+					<div class="mb-4 flex items-end justify-between gap-4">
+						<div>
+							<p class="metric-label">After-meal trend</p>
+							<p class="mt-2 text-sm leading-7 text-[var(--ink-soft)]">
+								Recent post-meal values, useful for spotting meal-driven swings.
+							</p>
+						</div>
+						{#if prandialReadings.length}
+							<div class="text-right text-xs uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+								<div>Range</div>
+								<div class="mt-1 font-semibold text-[var(--ink-strong)]">
+									{prandialChart.min} to {prandialChart.max}
+								</div>
+							</div>
+						{/if}
+					</div>
+					{#if prandialReadings.length}
+						<svg viewBox="0 0 100 100" class="h-44 w-full overflow-visible">
+							<line x1="0" y1="100" x2="100" y2="100" stroke="rgba(125,84,76,0.18)" stroke-width="1" />
+							<path
+								d={prandialChart.path}
+								fill="none"
+								stroke={prandialChart.color}
+								stroke-width="3"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							/>
+							{#each prandialChart.points as point}
+								<circle cx={point.x} cy={point.y} r="3.2" fill={prandialChart.color}>
+									<title>{point.label}: {point.value} mg/dL</title>
+								</circle>
+							{/each}
+						</svg>
+					{:else}
+						<p class="text-sm leading-7 text-[var(--ink-soft)]">No after-meal readings yet.</p>
 					{/if}
 				</div>
 			</div>

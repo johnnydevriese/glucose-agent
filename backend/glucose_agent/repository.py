@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import json
+import datetime as dt
 from pathlib import Path
 from threading import Lock
 from typing import Dict, List
 
-from .schemas import BloodSugarReading, ChatMessage, SessionState
+from .schemas import BloodSugarReading, ChatMessage, MealStatus, SessionState
 
 
 class GlucoseRepository:
@@ -14,7 +15,12 @@ class GlucoseRepository:
         self._lock = Lock()
         self.data_file.parent.mkdir(parents=True, exist_ok=True)
         if not self.data_file.exists():
-            self._write({"readings": [], "sessions": {}})
+            self._write(
+                {
+                    "readings": [reading.model_dump(mode="json") for reading in _demo_readings()],
+                    "sessions": {},
+                }
+            )
 
     def list_readings(self) -> List[BloodSugarReading]:
         payload = self._read()
@@ -62,3 +68,50 @@ class GlucoseRepository:
     def _write(self, payload: Dict) -> None:
         self.data_file.write_text(json.dumps(payload, indent=2))
 
+
+def _demo_readings() -> List[BloodSugarReading]:
+    today = dt.date.today()
+    return [
+        BloodSugarReading(
+            glucose_level=101,
+            date=today - dt.timedelta(days=10),
+            meal_status=MealStatus.FASTING,
+            notes="Solid baseline before breakfast.",
+        ),
+        BloodSugarReading(
+            glucose_level=134,
+            date=today - dt.timedelta(days=9),
+            meal_status=MealStatus.PRANDIAL,
+            notes="Two hours after oatmeal and fruit.",
+        ),
+        BloodSugarReading(
+            glucose_level=96,
+            date=today - dt.timedelta(days=7),
+            meal_status=MealStatus.FASTING,
+            notes="Felt rested and hydrated.",
+        ),
+        BloodSugarReading(
+            glucose_level=142,
+            date=today - dt.timedelta(days=6),
+            meal_status=MealStatus.PRANDIAL,
+            notes="After lunch meeting and a larger meal.",
+        ),
+        BloodSugarReading(
+            glucose_level=104,
+            date=today - dt.timedelta(days=4),
+            meal_status=MealStatus.FASTING,
+            notes="Slightly elevated after a late dinner.",
+        ),
+        BloodSugarReading(
+            glucose_level=128,
+            date=today - dt.timedelta(days=3),
+            meal_status=MealStatus.PRANDIAL,
+            notes="Steadier after a walk.",
+        ),
+        BloodSugarReading(
+            glucose_level=99,
+            date=today - dt.timedelta(days=1),
+            meal_status=MealStatus.FASTING,
+            notes="Back in the usual range.",
+        ),
+    ]

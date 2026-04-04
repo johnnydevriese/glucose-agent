@@ -70,12 +70,12 @@
 
 <div class="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
 	<section class="glass-panel-strong overflow-hidden rounded-[2rem]">
-		<div class="border-b border-[rgba(125,84,76,0.12)] p-5 sm:p-7">
+		<div class="sticky top-24 z-10 border-b border-[rgba(125,84,76,0.12)] bg-[rgba(255,250,244,0.92)] p-5 backdrop-blur-xl sm:p-7">
 			<div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
 				<div>
 					<p class="section-eyebrow mb-2">Chat Studio</p>
-					<h2 class="font-[var(--font-display)] text-4xl tracking-[-0.04em] text-[var(--ink-strong)]">
-						Talk like a person, log like a pro.
+					<h2 class="font-[var(--font-display)] text-3xl tracking-[-0.04em] text-[var(--ink-strong)] sm:text-4xl">
+						Talk like a person. Capture like a product.
 					</h2>
 					<p class="mt-3 max-w-2xl text-sm leading-7 text-[var(--ink-soft)]">
 						Describe your reading naturally and Glucose Buddy will extract the number, date,
@@ -91,10 +91,21 @@
 					</span>
 				</div>
 			</div>
+			<div class="mt-4 flex flex-wrap gap-2">
+				<div class="rounded-full border border-[rgba(125,84,76,0.14)] bg-white/70 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+					Natural language logging
+				</div>
+				<div class="rounded-full border border-[rgba(125,84,76,0.14)] bg-white/70 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+					Deterministic validation
+				</div>
+				<div class="rounded-full border border-[rgba(125,84,76,0.14)] bg-white/70 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+					Agent-assisted UX
+				</div>
+			</div>
 		</div>
 
 		<div
-			class="flex h-[30rem] flex-col overflow-y-auto bg-[linear-gradient(180deg,rgba(255,252,247,0.64),rgba(248,231,223,0.2))] p-4 sm:p-6"
+			class="flex h-[34rem] flex-col overflow-y-auto bg-[linear-gradient(180deg,rgba(255,252,247,0.64),rgba(248,231,223,0.2))] p-4 sm:p-6"
 			bind:this={messagesContainer}
 		>
 			{#each $messages as message, i}

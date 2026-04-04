@@ -56,7 +56,7 @@ class ReadingStats(BaseModel):
 class ChatMessage(BaseModel):
     role: Literal["user", "assistant"]
     content: str
-    created_at: dt.datetime = Field(default_factory=lambda: dt.datetime.utcnow())
+    created_at: dt.datetime = Field(default_factory=lambda: dt.datetime.now(dt.timezone.utc))
 
 
 class SessionState(BaseModel):
@@ -117,4 +117,3 @@ class RouterResult(BaseModel):
 
 
 JsonDict = Dict[str, Any]
-
